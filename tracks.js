@@ -1,22 +1,20 @@
 ﻿(function () {
  'use strict';
 
- var PLUGIN_NAME = 'Lampa Tracks + Swarm';
- var PLUGIN_VERSION = '1.0.2';
- // Не блокировать окно «Файлы» — метаданные только после старта плеера
+ if (window.plugin_lampa_tracks_ready) return;
+
  var SHOW_FILE_METAINFO = false;
-
- // Регистрируем плагин — в Lampa будет отображаться название и версия
- if (window.Lampa && Lampa.Manifest) {
-  Lampa.Manifest.plugins = Lampa.Manifest.plugins || [];
-  Lampa.Manifest.plugins.push({
-   name: PLUGIN_NAME,
-   version: PLUGIN_VERSION,
-   author: 'mrkvka',
-  });
- }
-
  var api_host = 'http://192.168.1.236:3000';
+
+ function startPlugin() {
+  window.plugin_lampa_tracks_ready = true;
+
+  Lampa.Manifest.plugins = {
+   type: 'extension',
+   version: '1.0.3',
+   name: 'Lampa Tracks',
+   description: 'Дорожки через TorrServer FFprobe',
+  };
  var list_opened = false;
 
   function reguest(params, callback) {
@@ -478,4 +476,16 @@
     "\n    <style>\n    .tracks-loading{margin-top:1em;display:-webkit-box;display:-webkit-flex;display:-moz-box;display:-ms-flexbox;display:flex;-webkit-box-align:start;-webkit-align-items:flex-start;-moz-box-align:start;-ms-flex-align:start;align-items:flex-start}.tracks-loading:before{content:'';display:inline-block;width:1.3em;height:1.3em;background:url('./img/loader.svg') no-repeat 50% 50%;-webkit-background-size:contain;-moz-background-size:contain;-o-background-size:contain;background-size:contain;margin-right:.4em}.tracks-loading>span{font-size:1.1em;line-height:1.1}.tracks-metainfo{margin-top:1em}.tracks-metainfo__line+.tracks-metainfo__line{margin-top:2em}.tracks-metainfo__label{opacity:.5;font-weight:600}.tracks-metainfo__info{padding-top:1em;line-height:1.2}.tracks-metainfo__info>div{background-color:rgba(0,0,0,0.22);display:-webkit-box;display:-webkit-flex;display:-moz-box;display:-ms-flexbox;display:flex;-webkit-border-radius:.3em;-moz-border-radius:.3em;border-radius:.3em;-webkit-flex-wrap:wrap;-ms-flex-wrap:wrap;flex-wrap:wrap}.tracks-metainfo__info>div.focus{background-color:rgba(255,255,255,0.06)}.tracks-metainfo__info>div>div{padding:1em;-webkit-flex-shrink:0;-ms-flex-negative:0;flex-shrink:0}.tracks-metainfo__info>div>div:not(:last-child){padding-right:1.5em}.tracks-metainfo__info>div+div{margin-top:1em}.tracks-metainfo__column--video,.tracks-metainfo__column--name{margin-right:auto}.tracks-metainfo__column--num{min-width:3em;padding-right:0}.tracks-metainfo__column--rate{min-width:7em;text-align:right}.tracks-metainfo__column--channels{min-width:5em;text-align:right}\n    </style>\n",
   );
   $('body').append(Lampa.Template.get('tracks_css', {}, true));
+ }
+
+ if (window.Lampa && window.appready) startPlugin();
+ else if (window.Lampa) {
+  Lampa.Listener.follow('app', function (e) {
+   if (e.type === 'ready') startPlugin();
+  });
+ } else {
+  setTimeout(function () {
+   if (window.Lampa) startPlugin();
+  }, 3000);
+ }
 })();
