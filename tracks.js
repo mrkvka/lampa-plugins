@@ -2,7 +2,9 @@
  'use strict';
 
  var PLUGIN_NAME = 'Lampa Tracks + Swarm';
- var PLUGIN_VERSION = '1.0.0';
+ var PLUGIN_VERSION = '1.0.2';
+ // Не блокировать окно «Файлы» — метаданные только после старта плеера
+ var SHOW_FILE_METAINFO = false;
 
  // Регистрируем плагин — в Lampa будет отображаться название и версия
  if (window.Lampa && Lampa.Manifest) {
@@ -32,27 +34,27 @@
         '&index=' +
         params.id;
 
+      var ctrl = new AbortController();
+      var tid = setTimeout(function () {
+        ctrl.abort();
+      }, 8000);
+
       fetch(apiUrl, {
         method: 'GET',
-        headers: {
-          Accept: 'application/json',
-        },
+        headers: { Accept: 'application/json' },
+        signal: ctrl.signal,
       })
         .then(function (response) {
-          if (!response.ok) {
-            throw new Error('HTTP error! status: ' + response.status);
-          }
+          clearTimeout(tid);
+          if (!response.ok) throw new Error('HTTP ' + response.status);
           return response.json();
         })
         .then(function (json) {
-          if (json.streams) {
-            callback(json);
-          } else {
-            console.error('Tracks', 'No streams in response');
-          }
+          if (json.streams) callback(json);
         })
         .catch(function (error) {
-          console.error('Tracks', 'Request error:', error);
+          clearTimeout(tid);
+          console.warn('Tracks', 'skip:', error.message || error);
         });
     }
   }
@@ -306,9 +308,19 @@
   }
 
   function parseMetainfo(data) {
+    if (!SHOW_FILE_METAINFO) return;
     var loading = Lampa.Template.get('tracks_loading');
     data.item.after(loading);
+    var removed = false;
+    function dropLoading() {
+      if (!removed) {
+        removed = true;
+        loading.remove();
+      }
+    }
+    setTimeout(dropLoading, 10000);
     reguest(data.element, function (result) {
+      dropLoading();
       if (list_opened) {
         var append = function append(name, fields) {
           if (fields.length) {
@@ -432,8 +444,6 @@
         append('video', video);
         append('audio', audio);
         append('subs', subs);
-        loading.remove();
-
         if (video.length || audio.length || subs.length) {
           data.item.after(html);
         }
