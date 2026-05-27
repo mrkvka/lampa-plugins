@@ -1,8 +1,21 @@
 ﻿(function () {
-  'use strict';
+ 'use strict';
 
-  var api_host = 'http://192.168.1.236:3000';
-  var list_opened = false;
+ var PLUGIN_NAME = 'Lampa Tracks + Swarm';
+ var PLUGIN_VERSION = '1.0.0';
+
+ // Регистрируем плагин — в Lampa будет отображаться название и версия
+ if (window.Lampa && Lampa.Manifest) {
+  Lampa.Manifest.plugins = Lampa.Manifest.plugins || [];
+  Lampa.Manifest.plugins.push({
+   name: PLUGIN_NAME,
+   version: PLUGIN_VERSION,
+   author: 'mrkvka',
+  });
+ }
+
+ var api_host = 'http://192.168.1.236:3000';
+ var list_opened = false;
 
   function reguest(params, callback) {
     if (params.ffprobe && params.path.split('.').pop() !== 'mp4') {
