@@ -1,0 +1,2 @@
+# lampa-plugins
+Lampa plugins
